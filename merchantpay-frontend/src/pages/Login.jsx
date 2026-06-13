@@ -31,6 +31,8 @@ export default function Login() {
 
       // ✅ STORE TOKEN
       localStorage.setItem("token", data);
+      localStorage.removeItem("isDemoMode");
+      localStorage.removeItem("demoData");
 
       // ✅ STORE USER (TEMP NAME FROM EMAIL)
       const userData = {

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { Edit3, Save, X, Plus, Package, DollarSign, Tag, Info } from "lucide-react";
+import { isDemoMode, getDemoProducts, saveDemoProducts } from "../../api/paymentApi";
 
 export default function Merchant() {
   const [products, setProducts] = useState([]);
@@ -17,6 +18,10 @@ export default function Merchant() {
   });
 
   const fetchProducts = async () => {
+    if (isDemoMode()) {
+      setProducts(getDemoProducts());
+      return;
+    }
     try {
       const res = await axios.get("http://localhost:8080/api/products");
       setProducts(res.data);
@@ -41,6 +46,22 @@ export default function Merchant() {
 
   // 💾 SAVE Logic (Handles both POST and PUT)
   const handleSave = async () => {
+    if (isDemoMode()) {
+      let products = getDemoProducts();
+      if (formData.id) {
+        products = products.map(p => p.id === formData.id ? { ...formData } : p);
+        alert("Product Updated (Demo)!");
+      } else {
+        const newProduct = { ...formData, id: Date.now() };
+        products.push(newProduct);
+        alert("New Product Added (Demo)!");
+      }
+      saveDemoProducts(products);
+      setIsModalOpen(false);
+      fetchProducts();
+      return;
+    }
+
     try {
       if (formData.id) {
         // If ID exists, Update (PUT)

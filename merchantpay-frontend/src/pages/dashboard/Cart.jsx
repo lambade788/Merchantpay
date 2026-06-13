@@ -2,6 +2,7 @@ import { useCart } from "../../context/CartContext";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { Trash2, ShoppingCart, CreditCard, ArrowLeft } from "lucide-react";
+import { isDemoMode, getDemoProducts, saveDemoProducts, getDemoOrders, saveDemoOrders, getMockData, saveMockData } from "../../api/paymentApi";
 
 export default function Cart() {
   const { cart, removeFromCart, clearCart } = useCart();
@@ -12,6 +13,44 @@ export default function Cart() {
   const handleCheckout = async () => {
     if (cart.length === 0) return;
     
+    if (isDemoMode()) {
+      // 1. Decrease Stock
+      const products = getDemoProducts();
+      cart.forEach(item => {
+        const prod = products.find(p => p.id === item.id);
+        if (prod) prod.stock -= item.quantity;
+      });
+      saveDemoProducts(products);
+
+      // 2. Create Payment Link
+      const linkId = "DEMO-" + Math.floor(Math.random() * 10000);
+      const mockData = getMockData();
+      mockData.links.unshift({
+        id: linkId,
+        linkId: linkId,
+        title: "Shop Order #" + linkId,
+        amount: subtotal,
+        status: "ACTIVE",
+        createdAt: new Date().toISOString()
+      });
+      saveMockData(mockData);
+
+      // 3. Create Order
+      const orders = getDemoOrders();
+      orders.unshift({
+        id: Math.floor(Math.random() * 10000),
+        userId: 1,
+        totalAmount: subtotal,
+        status: "PENDING",
+        paymentLinkId: linkId
+      });
+      saveDemoOrders(orders);
+
+      clearCart();
+      navigate(`/pay/${linkId}`);
+      return;
+    }
+
     try {
       const request = {
         userId: 1, // Change this when you add real User Auth

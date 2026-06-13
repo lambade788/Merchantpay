@@ -1,6 +1,7 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 export default function Hero() {
+  const navigate = useNavigate();
   return (
     <section className="pt-32 pb-24 px-6">
       <div className="max-w-6xl mx-auto text-center">
@@ -26,12 +27,15 @@ export default function Hero() {
             Get Started Free
           </Link>
 
-          <Link
-            to="/demo"
+          <button
+            onClick={() => {
+              localStorage.setItem('isDemoMode', 'true');
+              navigate('/dashboard');
+            }}
             className="border border-border px-8 py-4 rounded-xl text-white hover:bg-surface transition text-center"
           >
-            Demo
-          </Link>
+            Try Demo
+          </button>
         </div>
         
 

@@ -71,8 +71,12 @@ export default function Sidebar({ open, closeSidebar }) {
         <button 
           className="w-full flex items-center gap-4 px-4 py-3 hover:text-white transition-colors group"
           onClick={() => {
-            /* Add your logout logic here */
+            localStorage.removeItem("token");
+            localStorage.removeItem("user");
+            localStorage.removeItem("isDemoMode");
+            localStorage.removeItem("demoData");
             closeSidebar();
+            window.location.href = "/";
           }}
         >
           <LogOut size={20} className="rotate-180 group-hover:translate-x-[-2px] transition-transform" />

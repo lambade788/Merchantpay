@@ -3,6 +3,7 @@ import axios from "axios";
 import { useCart } from "../../context/CartContext";
 import { ShoppingBag, Tag, Box, CheckCircle2, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { isDemoMode, getDemoProducts } from "../../api/paymentApi";
 
 export default function Shop() {
   const [products, setProducts] = useState([]);
@@ -13,6 +14,10 @@ export default function Shop() {
   const navigate = useNavigate();
 
   const fetchProducts = () => {
+    if (isDemoMode()) {
+      setProducts(getDemoProducts());
+      return;
+    }
     axios.get("http://localhost:8080/api/products")
       .then(res => setProducts(res.data))
       .catch(err => console.error("Error fetching products:", err));

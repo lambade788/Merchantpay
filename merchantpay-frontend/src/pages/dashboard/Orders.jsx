@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { ClipboardList, CheckCircle, Clock, CreditCard } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { isDemoMode, getDemoOrders } from "../../api/paymentApi";
 
 export default function Orders() {
   const [orders, setOrders] = useState([]);
@@ -12,6 +13,10 @@ export default function Orders() {
   // ==============================
   useEffect(() => {
     const fetchOrders = async () => {
+      if (isDemoMode()) {
+        setOrders(getDemoOrders());
+        return;
+      }
       try {
         const res = await axios.get("http://localhost:8080/api/orders");
         console.log("Orders Data:", res.data); // 🔍 debug
