@@ -1,115 +1,109 @@
 import { useEffect, useState } from "react";
 import { getTransactions } from "../../api/paymentApi";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
+import { BarChart3, TrendingUp, ShieldCheck, CreditCard } from "lucide-react";
 
 export default function AnalyticsPage() {
   const [transactions, setTransactions] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  useEffect(() => { fetchData(); }, []);
 
   const fetchData = async () => {
+    setLoading(true);
     try {
       const res = await getTransactions();
       setTransactions(Array.isArray(res) ? res : []);
     } catch (error) {
       console.error("Error fetching transactions:", error);
       setTransactions([]);
+    } finally {
+      setLoading(false);
     }
   };
 
-  // 📊 CALCULATE DATA
-  const upiCount = transactions.filter(t => t.method === "UPI").length;
-  const cardCount = transactions.filter(t => t.method === "CARD").length;
+  const upiCount   = transactions.filter(t => t.method === "UPI").length;
+  const cardCount  = transactions.filter(t => t.method === "CARD").length;
   const otherCount = transactions.filter(t => !t.method || (t.method !== "UPI" && t.method !== "CARD")).length;
-  const total = transactions.length;
+  const total      = transactions.length;
+  const successCount = transactions.filter(t => t.status === "SUCCESS").length;
+  const totalRevenue = transactions.reduce((sum, t) => sum + (t.amount || 0), 0);
+  const successRate  = total ? ((successCount / total) * 100).toFixed(1) : 0;
 
-  const data = [
-    { name: "UPI", value: upiCount, color: "#10b981" },   // Green
-    { name: "Card", value: cardCount, color: "#3b82f6" },  // Blue
-    { name: "Other", value: otherCount, color: "#a855f7" }, // Purple
+  const chartData     = [
+    { name: "UPI",   value: upiCount,   color: "#818cf8" },
+    { name: "Card",  value: cardCount,  color: "#a78bfa" },
+    { name: "Other", value: otherCount, color: "#22d3ee" },
   ];
-
-  // This ensures the background track is always a full circle
   const backgroundData = [{ value: 1 }];
 
-  return (
-    <div className="p-8 bg-[#020617] min-h-screen text-white font-sans">
-      <h1 className="text-3xl font-bold mb-8 text-slate-100">Analytics Dashboard</h1>
+  const summaryTiles = [
+    { label: "Total Volume",   value: total,         color: "slate",   icon: BarChart3 },
+    { label: "UPI Payments",   value: upiCount,      color: "indigo",  icon: TrendingUp },
+    { label: "Card Payments",  value: cardCount,     color: "violet",  icon: CreditCard },
+    { label: "Other Methods",  value: otherCount,    color: "cyan",    icon: ShieldCheck },
+    { label: "Success Rate",   value: `${successRate}%`, color: "emerald", icon: ShieldCheck },
+    { label: "Total Revenue",  value: `₹${totalRevenue.toLocaleString()}`, color: "gold", icon: TrendingUp },
+  ];
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+  const tileColorMap = {
+    slate:   { bg: "bg-white/[0.04]",    text: "text-slate-200",  icon: "text-slate-400",  border: "border-white/[0.06]" },
+    indigo:  { bg: "bg-indigo-500/10",   text: "text-indigo-300", icon: "text-indigo-400", border: "border-indigo-500/20" },
+    violet:  { bg: "bg-violet-500/10",   text: "text-violet-300", icon: "text-violet-400", border: "border-violet-500/20" },
+    cyan:    { bg: "bg-cyan-500/10",     text: "text-cyan-300",   icon: "text-cyan-400",   border: "border-cyan-500/20" },
+    emerald: { bg: "bg-emerald-500/10",  text: "text-emerald-300",icon: "text-emerald-400",border: "border-emerald-500/20" },
+    gold:    { bg: "bg-amber-500/10",    text: "text-amber-300",  icon: "text-amber-400",  border: "border-amber-500/20" },
+  };
+
+  return (
+    <div className="space-y-8 animate-fadeIn">
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl md:text-3xl font-black text-white mb-1">Analytics Dashboard</h1>
+        <p className="text-slate-400 text-sm">Insights into your payment performance</p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
-        {/* 📊 SYNCED DONUT CHART CARD */}
-        <div className="bg-[#0f172a] p-8 rounded-3xl border border-slate-800 shadow-2xl">
-          <div className="flex justify-between items-center mb-10">
-            <h2 className="text-xl font-semibold tracking-tight">Payment Methods</h2>
-            <button className="text-slate-400 hover:text-emerald-400 text-sm transition-colors font-medium">
-              View Details
-            </button>
+        {/* Donut Chart */}
+        <div className="card p-8">
+          <div className="flex justify-between items-center mb-8">
+            <div>
+              <h2 className="text-lg font-black text-white">Payment Methods</h2>
+              <p className="text-slate-500 text-xs mt-0.5">Breakdown by method type</p>
+            </div>
+            <button className="btn-secondary text-xs px-4 py-2">View Details</button>
           </div>
 
           <div className="flex flex-col md:flex-row items-center justify-around gap-8">
-            {/* Chart Section */}
-            <div className="relative w-64 h-64">
+            <div className="relative w-56 h-56 flex-shrink-0">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
-                  {/* Background Track - Gives the "empty rail" look */}
-                  <Pie
-                    data={backgroundData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={75}
-                    outerRadius={90}
-                    fill="#1e293b"
-                    stroke="none"
-                    dataKey="value"
-                    isAnimationActive={false}
-                  />
-                  
-                  {/* Actual Data Pie */}
-                  <Pie
-                    data={data}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={75}
-                    outerRadius={90}
-                    paddingAngle={total > 0 ? 5 : 0} // Space between pills
-                    dataKey="value"
-                    stroke="none"
-                    cornerRadius={10} // Rounded caps
-                    startAngle={90}
-                    endAngle={-270}
-                  >
-                    {data.map((entry, index) => (
+                  <Pie data={backgroundData} cx="50%" cy="50%" innerRadius={70} outerRadius={85}
+                    fill="rgba(255,255,255,0.04)" stroke="none" dataKey="value" isAnimationActive={false} />
+                  <Pie data={chartData} cx="50%" cy="50%" innerRadius={70} outerRadius={85}
+                    paddingAngle={total > 0 ? 5 : 0} dataKey="value" stroke="none"
+                    cornerRadius={8} startAngle={90} endAngle={-270}>
+                    {chartData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip 
-                    cursor={false}
-                    contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '12px', color: '#fff' }}
-                    itemStyle={{ color: '#fff' }}
-                  />
+                  <Tooltip cursor={false} contentStyle={{ backgroundColor: '#0d1424', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', color: '#fff', fontSize: '12px' }} />
                 </PieChart>
               </ResponsiveContainer>
-              
-              {/* Center Text Overlay */}
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                <span className="text-4xl font-bold tracking-tight">{total.toLocaleString()}</span>
-                <span className="text-slate-500 text-xs font-bold uppercase tracking-[0.2em] mt-1">Total</span>
+                <span className="text-3xl font-black text-white">{total.toLocaleString()}</span>
+                <span className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mt-1">Total</span>
               </div>
             </div>
 
-            {/* Custom Legend Section */}
-            <div className="flex flex-col gap-3 w-full md:w-56">
-              {data.map((item) => (
-                <div key={item.name} className="flex items-center gap-4 bg-slate-800/30 p-3 rounded-xl border border-slate-700/50 hover:bg-slate-800/60 transition-all">
-                  <div className="w-2.5 h-2.5 rounded-full shadow-[0_0_8px_rgba(0,0,0,0.5)]" style={{ backgroundColor: item.color }} />
-                  <div className="flex flex-col">
-                    <span className="text-sm font-bold text-slate-100">{item.name}</span>
-                    <span className="text-[11px] text-slate-400 font-medium">
-                      {item.value} txns • {total > 0 ? ((item.value / total) * 100).toFixed(0) : 0}%
-                    </span>
+            <div className="flex flex-col gap-3 w-full md:w-52">
+              {chartData.map(item => (
+                <div key={item.name} className="flex items-center gap-3 p-3.5 rounded-xl border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04] transition-all">
+                  <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: item.color, boxShadow: `0 0 8px ${item.color}60` }} />
+                  <div className="flex-1">
+                    <span className="text-sm font-bold text-white">{item.name}</span>
+                    <div className="text-xs text-slate-500">{item.value} txns · {total > 0 ? ((item.value / total) * 100).toFixed(0) : 0}%</div>
                   </div>
                 </div>
               ))}
@@ -117,40 +111,31 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
-        {/* 💰 SUMMARY TOTALS CARD */}
-        <div className="bg-[#0f172a] p-8 rounded-3xl border border-slate-800 shadow-2xl flex flex-col">
-          <h2 className="text-xl font-semibold mb-8 tracking-tight">Quick Summary</h2>
-          
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 flex-grow">
-            <SummaryTile label="Total Volume" value={total} color="slate" />
-            <SummaryTile label="UPI Success" value={upiCount} color="emerald" />
-            <SummaryTile label="Card Payments" value={cardCount} color="blue" />
-            <SummaryTile label="Other Methods" value={otherCount} color="purple" />
+        {/* Summary Tiles */}
+        <div className="card p-8">
+          <h2 className="text-lg font-black text-white mb-6">Quick Summary</h2>
+          <div className="grid grid-cols-2 gap-4">
+            {summaryTiles.map((tile, i) => {
+              const c    = tileColorMap[tile.color];
+              const Icon = tile.icon;
+              return (
+                <div key={tile.label}
+                  className={`p-5 rounded-xl border ${c.bg} ${c.border} transition-all hover:scale-[1.02] duration-200 animate-fadeUp`}
+                  style={{ animationDelay: `${i * 0.07}s` }}>
+                  <div className="flex items-center gap-2 mb-3">
+                    <Icon size={14} className={c.icon} />
+                    <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider">{tile.label}</p>
+                  </div>
+                  <p className={`text-2xl font-black ${c.text}`}>{tile.value}</p>
+                </div>
+              );
+            })}
           </div>
-          
-          <p className="text-slate-600 text-[10px] mt-8 uppercase font-bold tracking-widest text-center">
-            Live sync: ZenithPay Microservices
+          <p className="text-slate-600 text-[10px] mt-6 uppercase font-bold tracking-widest text-center">
+            Live Sync · MerchantPay Microservices
           </p>
         </div>
-
       </div>
-    </div>
-  );
-}
-
-// Small helper component for the summary grid
-function SummaryTile({ label, value, color }) {
-  const colors = {
-    slate: "bg-slate-500/10 border-slate-700 text-slate-100",
-    emerald: "bg-emerald-500/10 border-emerald-500/20 text-emerald-400",
-    blue: "bg-blue-500/10 border-blue-500/20 text-blue-400",
-    purple: "bg-purple-500/10 border-purple-500/20 text-purple-400"
-  };
-
-  return (
-    <div className={`p-6 rounded-2xl border ${colors[color]} transition-transform hover:scale-[1.02]`}>
-      <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-2">{label}</p>
-      <p className="text-3xl font-black">{value.toLocaleString()}</p>
     </div>
   );
 }

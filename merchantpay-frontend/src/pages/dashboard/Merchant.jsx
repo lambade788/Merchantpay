@@ -1,27 +1,17 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { Edit3, Save, X, Plus, Package, DollarSign, Tag, Info } from "lucide-react";
+import { Edit3, Save, X, Plus, Package, DollarSign, Tag, Info, LayoutGrid } from "lucide-react";
 import { isDemoMode, getDemoProducts, saveDemoProducts } from "../../api/paymentApi";
 
 export default function Merchant() {
-  const [products, setProducts] = useState([]);
+  const [products, setProducts]   = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  
-  // This state handles both New and Existing products
-  const [formData, setFormData] = useState({
-    name: "",
-    price: "",
-    stock: "",
-    description: "",
-    imageUrl: "",
-    merchantId: 1 // Default merchant ID
+  const [formData, setFormData]   = useState({
+    name: "", price: "", stock: "", description: "", imageUrl: "", merchantId: 1,
   });
 
   const fetchProducts = async () => {
-    if (isDemoMode()) {
-      setProducts(getDemoProducts());
-      return;
-    }
+    if (isDemoMode()) { setProducts(getDemoProducts()); return; }
     try {
       const res = await axios.get("http://localhost:8080/api/products");
       setProducts(res.data);
@@ -32,174 +22,173 @@ export default function Merchant() {
 
   useEffect(() => { fetchProducts(); }, []);
 
-  // 🟢 Open Modal for NEW Product
   const openCreateModal = () => {
     setFormData({ name: "", price: "", stock: "", description: "", imageUrl: "", merchantId: 1 });
     setIsModalOpen(true);
   };
+  const openEditModal = (product) => { setFormData({ ...product }); setIsModalOpen(true); };
 
-  // 🔵 Open Modal for EDITING Product
-  const openEditModal = (product) => {
-    setFormData({ ...product });
-    setIsModalOpen(true);
-  };
-
-  // 💾 SAVE Logic (Handles both POST and PUT)
   const handleSave = async () => {
     if (isDemoMode()) {
-      let products = getDemoProducts();
+      let prods = getDemoProducts();
       if (formData.id) {
-        products = products.map(p => p.id === formData.id ? { ...formData } : p);
+        prods = prods.map(p => p.id === formData.id ? { ...formData } : p);
         alert("Product Updated (Demo)!");
       } else {
-        const newProduct = { ...formData, id: Date.now() };
-        products.push(newProduct);
+        prods.push({ ...formData, id: Date.now() });
         alert("New Product Added (Demo)!");
       }
-      saveDemoProducts(products);
+      saveDemoProducts(prods);
       setIsModalOpen(false);
       fetchProducts();
       return;
     }
-
     try {
       if (formData.id) {
-        // If ID exists, Update (PUT)
         await axios.put(`http://localhost:8080/api/products/${formData.id}`, formData);
         alert("Product Updated!");
       } else {
-        // If no ID, Create (POST)
         await axios.post("http://localhost:8080/api/products", formData);
         alert("New Product Added!");
       }
       setIsModalOpen(false);
-      fetchProducts(); // Refresh the list
+      fetchProducts();
     } catch (err) {
       alert("Error saving product. Check your backend console.");
     }
   };
 
+  const inputCls = "input-premium";
+  const labelCls = "flex items-center gap-1.5 text-xs font-bold text-slate-400 uppercase tracking-widest mb-2";
+
   return (
-    <div className="min-h-screen bg-[#0a1120] text-slate-300 p-8">
-      
-      {/* HEADER WITH ADD BUTTON */}
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <h2 className="text-3xl font-bold text-white">Inventory</h2>
-          <p className="text-slate-500">Manage your stock and product details</p>
+    <div className="space-y-7 animate-fadeIn">
+      {/* Header */}
+      <div className="flex justify-between items-start">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-violet-500/10 flex items-center justify-center">
+            <LayoutGrid className="text-violet-400" size={22} />
+          </div>
+          <div>
+            <h2 className="text-2xl md:text-3xl font-black text-white">Inventory</h2>
+            <p className="text-slate-400 text-sm">Manage your stock and product details</p>
+          </div>
         </div>
-        <button 
-          onClick={openCreateModal}
-          className="bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-emerald-500/20 transition-all"
-        >
-          <Plus size={20} /> Add New Product
+        <button onClick={openCreateModal} className="btn-primary text-sm px-5 py-2.5">
+          <Plus size={16} /> Add Product
         </button>
       </div>
 
-      {/* PRODUCT LIST TABLE */}
-      <div className="bg-[#0f172a] border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
-        <table className="w-full text-left">
-          <thead className="bg-slate-800/50 text-slate-400 text-xs uppercase tracking-widest">
-            <tr>
-              <th className="p-4">Product Name</th>
-              <th className="p-4">Stock</th>
-              <th className="p-4">Price</th>
-              <th className="p-4 text-center">Manage</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-800">
-            {products.map(p => (
-              <tr key={p.id} className="hover:bg-slate-800/30 transition-colors">
-                <td className="p-4 flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-slate-800 overflow-hidden">
-                    <img src={p.imageUrl || 'https://placehold.co/40'} className="object-cover w-full h-full" alt="" />
-                  </div>
-                  <span className="font-bold text-white">{p.name}</span>
-                </td>
-                <td className="p-4">
-                  <span className={`px-2 py-1 rounded-md text-xs font-bold ${p.stock < 5 ? 'bg-red-500/10 text-red-400' : 'bg-emerald-500/10 text-emerald-400'}`}>
-                    {p.stock} units
-                  </span>
-                </td>
-                <td className="p-4 font-mono text-white">₹{p.price}</td>
-                <td className="p-4 text-center">
-                  <button 
-                    onClick={() => openEditModal(p)}
-                    className="p-2 bg-blue-500/10 text-blue-400 rounded-lg hover:bg-blue-500 hover:text-white transition-all"
-                  >
-                    <Edit3 size={18} />
-                  </button>
-                </td>
+      {/* Table */}
+      <div className="card overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="table-premium">
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Stock</th>
+                <th>Price</th>
+                <th className="text-center">Manage</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {products.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="px-6 py-20 text-center">
+                    <Package size={44} className="mx-auto text-slate-700 mb-3" />
+                    <p className="text-slate-500 font-medium">No products listed</p>
+                    <p className="text-slate-600 text-xs mt-1">Click "Add Product" to list your first item</p>
+                  </td>
+                </tr>
+              ) : (
+                products.map(p => (
+                  <tr key={p.id}>
+                    <td>
+                      <div className="flex items-center gap-3">
+                        <div className="w-11 h-11 rounded-xl overflow-hidden bg-white/[0.04] border border-white/[0.06] flex-shrink-0">
+                          <img src={p.imageUrl || "https://placehold.co/44"} className="object-cover w-full h-full" alt="" />
+                        </div>
+                        <span className="font-bold text-white text-sm">{p.name}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <span className={`px-2.5 py-1 rounded-lg text-xs font-bold border ${
+                        p.stock < 5
+                          ? "bg-red-500/10 text-red-400 border-red-500/20"
+                          : "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                      }`}>
+                        {p.stock} units
+                      </span>
+                    </td>
+                    <td className="font-mono font-bold text-white">₹{p.price}</td>
+                    <td className="text-center">
+                      <button
+                        onClick={() => openEditModal(p)}
+                        className="inline-flex items-center gap-1.5 text-xs font-bold px-3.5 py-2 rounded-lg bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 hover:bg-indigo-500/20 transition-all"
+                      >
+                        <Edit3 size={13} /> Edit
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      {/* 🛠️ ADD / EDIT MODAL */}
+      {/* Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#1e293b] border border-slate-700 w-full max-w-lg rounded-2xl shadow-2xl animate-in zoom-in duration-200 overflow-hidden">
-            
-            <div className="p-6 border-b border-slate-700 flex justify-between items-center bg-slate-800/30">
-              <h3 className="text-xl font-bold text-white">
-                {formData.id ? "Update Product" : "List New Product"}
-              </h3>
-              <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-white"><X /></button>
-            </div>
-            
-            <div className="p-6 space-y-5">
-              {/* Product Name */}
-              <div>
-                <label className="text-xs font-bold text-slate-500 uppercase flex items-center gap-2 mb-2"><Tag size={14}/> Name</label>
-                <input 
-                  className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition-all"
-                  placeholder="Enter product title..."
-                  value={formData.name}
-                  onChange={e => setFormData({...formData, name: e.target.value})}
-                />
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fadeIn">
+          <div className="glass-strong gradient-border w-full max-w-lg rounded-2xl shadow-glass overflow-hidden animate-fadeUp">
+            {/* Modal header */}
+            <div className="px-6 py-5 border-b border-white/[0.07] flex justify-between items-center">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-indigo-500/15 flex items-center justify-center">
+                  <Package size={16} className="text-indigo-400" />
+                </div>
+                <h3 className="text-lg font-black text-white">
+                  {formData.id ? "Update Product" : "List New Product"}
+                </h3>
               </div>
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="p-2 rounded-lg text-slate-500 hover:text-white hover:bg-white/10 transition-all"
+              >
+                <X size={18} />
+              </button>
+            </div>
 
-              {/* Price & Stock */}
+            {/* Form */}
+            <div className="p-6 space-y-5">
+              <div>
+                <label className={labelCls}><Tag size={12} /> Name</label>
+                <input className={inputCls} placeholder="Enter product title..."
+                  value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
+              </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-xs font-bold text-slate-500 uppercase flex items-center gap-2 mb-2"><DollarSign size={14}/> Price (₹)</label>
-                  <input 
-                    type="number"
-                    className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white outline-none"
-                    value={formData.price}
-                    onChange={e => setFormData({...formData, price: e.target.value})}
-                  />
+                  <label className={labelCls}><DollarSign size={12} /> Price (₹)</label>
+                  <input type="number" className={inputCls}
+                    value={formData.price} onChange={e => setFormData({ ...formData, price: e.target.value })} />
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-slate-500 uppercase flex items-center gap-2 mb-2"><Package size={14}/> Initial Stock</label>
-                  <input 
-                    type="number"
-                    className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white outline-none"
-                    value={formData.stock}
-                    onChange={e => setFormData({...formData, stock: e.target.value})}
-                  />
+                  <label className={labelCls}><Package size={12} /> Stock</label>
+                  <input type="number" className={inputCls}
+                    value={formData.stock} onChange={e => setFormData({ ...formData, stock: e.target.value })} />
                 </div>
               </div>
-
-              {/* Image URL */}
               <div>
-                <label className="text-xs font-bold text-slate-500 uppercase flex items-center gap-2 mb-2"><Info size={14}/> Image Link</label>
-                <input 
-                  className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white outline-none"
-                  placeholder="https://images.com/product.jpg"
-                  value={formData.imageUrl}
-                  onChange={e => setFormData({...formData, imageUrl: e.target.value})}
-                />
+                <label className={labelCls}><Info size={12} /> Image URL</label>
+                <input className={inputCls} placeholder="https://images.com/product.jpg"
+                  value={formData.imageUrl} onChange={e => setFormData({ ...formData, imageUrl: e.target.value })} />
               </div>
             </div>
 
-            <div className="p-6 bg-slate-800/30 border-t border-slate-700">
-              <button 
-                onClick={handleSave}
-                className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 shadow-lg transition-all"
-              >
-                <Save size={20} /> {formData.id ? "Update Changes" : "Create Product"}
+            {/* Footer */}
+            <div className="px-6 pb-6">
+              <button onClick={handleSave} className="btn-primary w-full justify-center py-4">
+                <Save size={16} /> {formData.id ? "Save Changes" : "Create Product"}
               </button>
             </div>
           </div>

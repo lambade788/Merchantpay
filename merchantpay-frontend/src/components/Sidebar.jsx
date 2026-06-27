@@ -1,75 +1,97 @@
 import { Link, useLocation } from "react-router-dom";
-import { 
-  X, 
-  LayoutDashboard, 
-  ClipboardList, 
-  Link as LinkIcon, 
-  BarChart3, 
-  Settings, 
-  LogOut 
+import {
+  X,
+  LayoutDashboard,
+  ClipboardList,
+  Link as LinkIcon,
+  BarChart3,
+  Settings,
+  LogOut,
+  Zap,
 } from "lucide-react";
+
+const navItems = [
+  { name: "Overview", path: "/dashboard", icon: LayoutDashboard },
+  { name: "Transactions", path: "/dashboard/transactions", icon: ClipboardList },
+  { name: "Payment Links", path: "/dashboard/payment-links", icon: LinkIcon },
+  { name: "Analytics", path: "/dashboard/analytics", icon: BarChart3 },
+  { name: "Settings", path: "/dashboard/settings", icon: Settings },
+];
 
 export default function Sidebar({ open, closeSidebar }) {
   const location = useLocation();
-
-  // Helper to check if a route is active
   const isActive = (path) => location.pathname === path;
 
-  // Navigation Items Mapping to keep code clean
-  const navItems = [
-    { name: "Dashboard", path: "/dashboard", icon: <LayoutDashboard size={20} /> },
-    { name: "Transactions", path: "/dashboard/transactions", icon: <ClipboardList size={20} /> },
-    { name: "Payment Links", path: "/dashboard/payment-links", icon: <LinkIcon size={20} /> },
-    { name: "Analytics", path: "/dashboard/analytics", icon: <BarChart3 size={20} /> },
-    { name: "Settings", path: "/dashboard/settings", icon: <Settings size={20} /> },
-  ];
-
   return (
-    <div
-      className={`fixed top-0 left-0 h-full w-72 bg-[#0a1120] border-r border-slate-800 p-6 transform transition-transform duration-300 z-50 flex flex-col text-slate-400 font-sans
-      ${open ? "translate-x-0" : "-translate-x-full"}`}
+    <aside
+      className={`fixed top-0 left-0 h-full w-[260px] z-50 flex flex-col transition-transform duration-300 ease-in-out
+        glass-strong border-r border-white/[0.07]
+        ${open ? "translate-x-0" : "-translate-x-full"}`}
     >
-      {/* HEADER WITH LOGO AND CLOSE BUTTON */}
-      <div className="flex items-center justify-between mb-10">
+      {/* Logo */}
+      <div className="flex items-center justify-between px-6 py-5 border-b border-white/[0.07]">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-blue-500 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-emerald-500/20">
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white font-black text-lg"
+            style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)" }}>
             M
           </div>
-          <h1 className="text-white text-xl font-bold tracking-tight">MerchantPay</h1>
+          <div>
+            <p className="text-white font-bold text-sm leading-none tracking-tight">MerchantPay</p>
+            <p className="text-slate-500 text-[10px] mt-0.5">Dashboard</p>
+          </div>
         </div>
-
-        <X
-          className="cursor-pointer text-slate-500 hover:text-white transition-colors"
+        <button
           onClick={closeSidebar}
-          size={24}
-        />
+          className="p-1.5 rounded-lg text-slate-500 hover:text-white hover:bg-white/10 transition-all"
+        >
+          <X size={18} />
+        </button>
       </div>
 
-      {/* NAVIGATION */}
-      <nav className="flex-1 space-y-2">
-        {navItems.map((item) => (
-          <Link
-            key={item.path}
-            to={item.path}
-            onClick={closeSidebar}
-            className={`flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all duration-200 group border ${
-              isActive(item.path)
-                ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
-                : "bg-transparent border-transparent hover:bg-slate-800/50 hover:text-slate-200"
-            }`}
-          >
-            <span className={isActive(item.path) ? "text-emerald-400" : "text-slate-400 group-hover:text-slate-200"}>
-              {item.icon}
-            </span>
-            <span className="font-medium">{item.name}</span>
-          </Link>
-        ))}
+      {/* Navigation */}
+      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+        <p className="text-slate-600 text-[10px] font-bold uppercase tracking-widest px-3 mb-3">Main Menu</p>
+        {navItems.map((item) => {
+          const Icon = item.icon;
+          const active = isActive(item.path);
+          return (
+            <Link
+              key={item.path}
+              to={item.path}
+              onClick={closeSidebar}
+              className={`group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 border
+                ${active
+                  ? "nav-active border-indigo-500/30 text-indigo-400"
+                  : "border-transparent text-slate-400 hover:text-white hover:bg-white/[0.06]"
+                }`}
+            >
+              {/* Active indicator bar */}
+              <div className={`w-0.5 h-5 rounded-full transition-all duration-200 ${active ? "bg-indigo-400" : "bg-transparent"}`} />
+              <Icon
+                size={17}
+                className={`flex-shrink-0 transition-colors duration-200 ${active ? "text-indigo-400" : "text-slate-500 group-hover:text-slate-300"}`}
+              />
+              <span>{item.name}</span>
+              {active && (
+                <div className="ml-auto w-1.5 h-1.5 rounded-full bg-indigo-400" />
+              )}
+            </Link>
+          );
+        })}
       </nav>
 
-      {/* FOOTER / LOGOUT */}
-      <div className="pt-6 border-t border-slate-800/50">
-        <button 
-          className="w-full flex items-center gap-4 px-4 py-3 hover:text-white transition-colors group"
+      {/* Footer */}
+      <div className="px-3 py-4 border-t border-white/[0.07] space-y-1">
+        <div className="px-3 py-2 rounded-xl bg-indigo-500/10 border border-indigo-500/20 mb-3">
+          <div className="flex items-center gap-2 mb-1">
+            <Zap size={14} className="text-indigo-400" />
+            <span className="text-xs font-bold text-indigo-400">Pro Plan</span>
+          </div>
+          <p className="text-slate-500 text-[10px]">All features unlocked</p>
+        </div>
+
+        <button
+          className="w-full group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-500 hover:text-red-400 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition-all duration-200"
           onClick={() => {
             localStorage.removeItem("token");
             localStorage.removeItem("user");
@@ -79,10 +101,11 @@ export default function Sidebar({ open, closeSidebar }) {
             window.location.href = "/";
           }}
         >
-          <LogOut size={20} className="rotate-180 group-hover:translate-x-[-2px] transition-transform" />
-          <span className="font-medium text-slate-400 group-hover:text-white">Logout</span>
+          <div className="w-0.5 h-5 rounded-full" />
+          <LogOut size={17} className="flex-shrink-0" />
+          <span>Logout</span>
         </button>
       </div>
-    </div>
+    </aside>
   );
 }
