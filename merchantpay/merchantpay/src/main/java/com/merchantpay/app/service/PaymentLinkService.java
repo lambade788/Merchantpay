@@ -26,6 +26,9 @@ public class PaymentLinkService {
     @Autowired
     private TransactionRepository transactionRepository;
 
+    @Autowired
+    private SseService sseService;
+
     // ==============================
     // ✅ CREATE PAYMENT LINK
     // ==============================
@@ -77,11 +80,23 @@ public class PaymentLinkService {
         Transaction savedTx = transactionRepository.save(tx);
 
         // 🔥 UPDATE ORDER STATUS
-       if (link.getOrderId() != null) {
-    Order order = orderRepository.findById(link.getOrderId()).orElseThrow();
-    order.setStatus("SUCCESS");
-    orderRepository.save(order);
-    }
+        if (link.getOrderId() != null) {
+            Order order = orderRepository.findById(link.getOrderId()).orElseThrow();
+            order.setStatus("SUCCESS");
+            orderRepository.save(order);
+        }
+
+        // 🚀 Broadcast SSE real-time Soundbox notification
+        try {
+            java.util.Map<String, Object> payload = new java.util.HashMap<>();
+            payload.put("amount", savedTx.getAmount());
+            payload.put("method", savedTx.getMethod());
+            payload.put("linkId", savedTx.getLinkId());
+            payload.put("paidAt", savedTx.getPaidAt().toString());
+            sseService.broadcast("payment_success", payload);
+        } catch (Exception e) {
+            System.err.println("Failed to broadcast SSE notification: " + e.getMessage());
+        }
 
         return savedTx;
     }

@@ -13,6 +13,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import org.springframework.http.HttpMethod;
 import java.util.List;
 
 @Configuration
@@ -28,7 +29,7 @@ public class SecurityConfig {
 public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
     http
-        .cors().and()
+        .cors(cors -> cors.configurationSource(corsConfigurationSource()))
         .csrf(AbstractHttpConfigurer::disable) // ✅ VERY IMPORTANT
 
         .sessionManagement(session ->
@@ -36,13 +37,12 @@ public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         .authorizeHttpRequests(auth -> auth
             .requestMatchers("/api/auth/**").permitAll()
-            .requestMatchers("/api/pay/**").permitAll() // ✅ allow payment
-            .requestMatchers("/api/payment-links/**").permitAll()
-            .requestMatchers("/api/transactions/**").permitAll()
+            .requestMatchers(HttpMethod.GET, "/api/payment-links/{linkId}").permitAll()
+            .requestMatchers("/api/payment-links/{linkId}/qr").permitAll()
+            .requestMatchers("/api/pay/{linkId}").permitAll()
+            .requestMatchers("/api/pay/{linkId}/qr").permitAll()
             .requestMatchers("/api/checkout").permitAll()
-            .requestMatchers("/api/products/**").permitAll()
-            .requestMatchers("/api/orders/**").permitAll()
-            .requestMatchers("/api/**").permitAll() 
+            .requestMatchers("/api/stream/**").permitAll()
             .anyRequest().authenticated()
         )
 

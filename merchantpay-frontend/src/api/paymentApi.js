@@ -112,7 +112,11 @@ export const getPaymentLinks = async () => {
     return getMockData().links;
   }
 
-  const res = await fetch(`${BASE_URL}/payment-links`);
+  const res = await fetch(`${BASE_URL}/payment-links`, {
+    headers: {
+      Authorization: `Bearer ${getToken()}`,
+    },
+  });
 
   if (!res.ok) throw new Error("Failed to fetch links");
   return res.json();
@@ -155,6 +159,18 @@ export const payNow = async (linkId, method) => {
     };
     mockData.transactions.unshift(newTransaction);
     saveMockData(mockData);
+
+    // Trigger Soundbox notification across tabs for Demo Mode
+    localStorage.setItem("demo_payment_trigger", JSON.stringify({
+      amount: newTransaction.amount,
+      method: method,
+      timestamp: Date.now()
+    }));
+    
+    // Dispatch local event for same-tab triggers
+    window.dispatchEvent(new CustomEvent("local_payment_trigger", {
+      detail: { amount: newTransaction.amount, method }
+    }));
     
     const orders = getDemoOrders();
     const orderIndex = orders.findIndex(o => o.paymentLinkId === linkId);

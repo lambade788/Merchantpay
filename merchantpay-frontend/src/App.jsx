@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import DashboardLayout from "./layouts/DashboardLayout";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
@@ -31,18 +32,18 @@ export default function App() {
         <Route path="/pay/:linkId" element={<PaymentPage />} />
 
         {/* DASHBOARD ROUTES */}
-        <Route path="/dashboard" element={<DashboardLayout />}>
-
-          <Route index element={<Overview />} />
-          <Route path="transactions" element={<Transactions />} />
-          <Route path="payment-links" element={<PaymentLink />} />
-          <Route path="analytics" element={<AnalyticsPage />} />
-          <Route path="settings" element={<Settings />} />
-          <Route path="orders" element={<Orders />} />  {/* 🔥 FIXED */}
-          <Route path="shop" element={<Shop />} />
-          <Route path="cart" element={<Cart />} />
-          <Route path="merchant" element={<Merchant />} />
-
+        <Route element={<ProtectedRoute />}>
+          <Route path="/dashboard" element={<DashboardLayout />}>
+            <Route index element={<Overview />} />
+            <Route path="transactions" element={<Transactions />} />
+            <Route path="payment-links" element={<PaymentLink />} />
+            <Route path="analytics" element={<AnalyticsPage />} />
+            <Route path="settings" element={<Settings />} />
+            <Route path="orders" element={<Orders />} />
+            <Route path="shop" element={<Shop />} />
+            <Route path="cart" element={<Cart />} />
+            <Route path="merchant" element={<Merchant />} />
+          </Route>
         </Route>
 
       </Routes>

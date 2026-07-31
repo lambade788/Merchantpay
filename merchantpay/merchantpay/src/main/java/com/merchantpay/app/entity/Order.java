@@ -11,6 +11,7 @@ public class Order {
     private Long id;
 
     private Long userId;
+    
     private double totalAmount;
     @Column(name = "payment_link_id")
     private String paymentLinkId;
